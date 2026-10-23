@@ -1,115 +1,87 @@
-# Kurio — Marketplace de NFTs
+# Kurio Marketplace
 
-Front-end do desafio em **React + TypeScript**, com **TanStack Router/Query**, **Axios**, **Tailwind**, componentes no estilo **shadcn/ui**,
-**MSW** (REST + Socket.IO), **Playwright** e **Lighthouse**. Tudo roda sem backend: a API, a sessão, as carteiras, os pagamentos e o tempo real são simulados na camada de rede.
+Aplicação front-end em React e TypeScript para um marketplace de NFTs. A API, as sessões, as carteiras, os pagamentos e os eventos em tempo real são simulados com MSW; não é necessário um backend.
 
-> Decisões de arquitetura, contratos, política de cache/sessão, limitações e desvios do Figma: **[ARCHITECTURE.md](./ARCHITECTURE.md)**.
+## Requisitos
 
-## Setup
+- Node.js 22 ou superior
+- npm 10 ou superior
 
-Requisitos: Node 22+ e npm 10+.
+## Instalação e execução
 
 ```bash
 npm ci
-cp .env.example .env.local   # opcional: os padrões já funcionam
-npm run dev:mocks            # http://localhost:5173 com mocks ligados
+npm run dev:mocks
 ```
 
-### Variáveis de ambiente
-
-| Variável | Padrão | Efeito |
-|---|---|---|
-| `VITE_ENABLE_MOCKS` | ligado (qualquer valor ≠ `false`) | Liga o MSW (REST + Socket.IO). O build de demonstração e o deploy usam `true`. |
-| `VITE_API_BASE_URL` | `/api` | Base do cliente Axios. Com mocks, é interceptada pelo MSW. |
-
-## Credenciais fictícias
-
-| Usuário | E-mail | Senha | Perfil |
-|---|---|---|---|
-| Ana Duarte | `ana@kurio.test` | `Kurio#2026` | Carteira principal (Ethereum) + secundária (Polygon); favorito inicial |
-| Bruno Lima | `bruno@kurio.test` | `Kurio#2026` | Só carteira principal; sem favoritos |
-
-Cupons: `LANCAMENTO10` (10%), `KURIO5` (5%), `EXPIRADO` (expirado). Qualquer outro código é inválido.
-As senhas ficam no banco dos mocks como SHA-256 com sal; nenhuma senha é guardada em claro.
+O Vite inicia a aplicação em `http://localhost:5173`.
 
 ## Comandos
 
-| Comando | O que faz |
-|---|---|
-| `npm run dev` / `npm run dev:mocks` | Desenvolvimento (mocks ligados por padrão) |
-| `npm run build` | Typecheck + build de produção |
-| `npm run build:demo` | Build de demonstração (mocks garantidamente ligados) |
-| `npm run preview` | Serve o build em `http://localhost:4173` |
-| `npm run typecheck` | `tsc -b --noEmit` |
-| `npm run lint` | ESLint (inclui a regra “o app não importa os mocks”) |
-| `npm run test:mocks` | 52 verificações de contrato dos handlers + Socket.IO real, em Node, sem navegador |
-| `npx playwright install chromium` | Baixa o navegador (uma vez) |
-| `npm run test:e2e` | E2E em Chromium desktop (1440) e mobile (390); relatório em `playwright-report/` |
-| `npm run test:e2e:update` | Gera/atualiza as baselines de regressão visual |
-| `npm run lighthouse` | 3 medições × (início, detalhe) × (mobile, desktop); mediana em `lighthouse/reports/summary.md` |
+- `npm run build`: verifica os tipos e gera o build de produção.
+- `npm run build:demo`: gera o build com os mocks ativados.
+- `npm run preview`: serve o build em `http://localhost:4173`.
+- `npm run typecheck`: executa o TypeScript.
+- `npm run lint`: executa o ESLint.
+- `npm run test:mocks`: verifica os handlers REST e Socket.IO simulados.
+- `npx playwright install chromium`: instala o navegador usado nos testes.
+- `npm run test:e2e`: executa os testes de ponta a ponta em desktop e mobile.
+- `npm run test:e2e:update`: atualiza as imagens de referência dos testes visuais.
+- `npm run lighthouse`: executa três medições nas páginas inicial e de detalhe, em desktop e mobile.
 
-Fluxo completo de qualidade: `npm run typecheck && npm run lint && npm run test:mocks && npm run test:e2e`.
-Para o Lighthouse: `npm run build:demo && npm run preview` e, em outro terminal, `npm run lighthouse`.
+Para rodar os testes principais:
 
-## Cenários dos mocks (seleção e reset)
-
-Selecione pela URL (persiste em `localStorage`; combine com vírgula) ou pelo console:
-
-```
-http://localhost:5173/?scenario=slow,paymentDeclined     # aplica e remove o parâmetro da URL
-http://localhost:5173/?reset=1                           # restaura integralmente as fixtures + cenário padrão
-> __kurio.scenario.set(['jitter'])   > __kurio.reset()   > __kurio.presets
+```bash
+npm run typecheck
+npm run lint
+npm run test:mocks
+npm run test:e2e
 ```
 
-| Cenário | Efeito reproduzível |
-|---|---|
-| `default` / `success` | Latência 120–320 ms, pedido liquida em 2,5 s, pagamento confirmado |
-| `fast` | Sem latência; liquidação em 0,4 s (usado nos testes) |
-| `empty` | Catálogo vazio |
-| `slow` / `jitter` | Latência de 2,5–3,5 s / variável de 80 ms a 2,2 s (PRNG com semente) |
-| `outOfOrder` | 1ª listagem lenta, 2ª rápida: respostas chegam fora de ordem |
-| `offline` | Toda requisição REST falha sem resposta (erro de conexão) |
-| `error500` / `error404` | `GET /nfts` responde HTTP 500 / 404 |
-| `flaky` | A 1ª tentativa de cada GET responde 503; a repetição funciona |
-| `sessionExpired` | A próxima requisição autenticada responde 401 `SESSION_EXPIRED` (uso único) |
-| `forbidden` | Endpoints privados respondem 403 |
-| `priceChanged` | O preço do 1º item muda ao enviar o pedido (409 `QUOTE_CHANGED`) — uso único |
-| `soldOut` | A edição do 1º item esgota ao enviar o pedido (409 `AVAILABILITY_CONFLICT`) — uso único |
-| `orderTimeout` | O pedido é criado, mas a resposta se perde; reenviar com a mesma chave recupera o pedido — uso único |
-| `paymentDeclined` / `paymentConfirmed` | Pedido termina recusado / confirmado |
-| `walletRejected` | A conexão da carteira é recusada |
-| `favoriteFailure` | Favoritar/desfavoritar responde 500 (testa o rollback otimista) |
-| `duplicateEvents` | Cada evento Socket.IO é entregue duas vezes |
+Para medir o Lighthouse, execute `npm run build:demo` e `npm run preview`. Em outro terminal, execute `npm run lighthouse`. Os resultados ficam em `lighthouse/reports/summary.md`.
 
-Cenários sem preset (conflito de cadastro, cupom inválido/expirado, validação de formulários) são determinísticos pelos dados:
-cadastre com `ana@kurio.test` (409), use `NADA`/`EXPIRADO` no cupom, ou `ab` como usuário (422).
+## Contas de demonstração
 
-### Controle em tempo de execução (`window.__kurio`)
+| Nome | E-mail | Senha |
+|---|---|---|
+| Ana Duarte | `ana@kurio.test` | `Kurio#2026` |
+| Bruno Lima | `bruno@kurio.test` | `Kurio#2026` |
 
-Usado pelo Playwright e útil em demonstrações. Todo evento passa pelo **servidor Socket.IO simulado e chega pelo `socket.io-client`**:
-`realtime.updateNft(id, {price, availability})`, `duplicateNftEvent`, `staleNftEvent`, `settleOrder`, `dropConnections()`, `setOffline(bool)`, `session.expireAll()`.
+Ana tem carteiras Ethereum e Polygon e um favorito inicial. Bruno tem uma carteira Ethereum e nenhum favorito. Os cupons disponíveis são `LANCAMENTO10` e `KURIO5`; `EXPIRADO` representa um cupom vencido.
 
-## Reproduzir os fluxos de falha
+## Mocks
 
-1. **Preço mudando no carrinho:** entre como Ana, adicione “Emerald Ape #042”, abra `/carrinho` e no console: `__kurio.realtime.updateNft('emerald-ape-042', { price: '2.00' })`. O aviso aparece, o resumo atualiza e o checkout só confirma com a cotação nova.
-2. **Timeout com recuperação:** `/?scenario=fast,orderTimeout` → compre. A 1ª resposta se perde; o app reenvia com a mesma chave e termina no mesmo pedido (`ord_00001`), sem duplicar.
-3. **Desconexão com pedido pendente:** `/?scenario=default`, envie o pedido e rode `__kurio.realtime.setOffline(true)`; depois `setOffline(false)` ou recarregue a página. O estado é recuperado por REST + reconciliação.
-4. **Sessão expirando no checkout:** `__kurio.session.expireAll()` e confirme a compra → login com retorno a `/pagamento`; o rascunho do formulário é preservado.
+Os mocks são ativados por padrão. `VITE_ENABLE_MOCKS=false` desativa o MSW. `VITE_API_BASE_URL` define a base da API e usa `/api` por padrão.
 
-## Deploy (Vercel)
+É possível selecionar cenários pela URL, por exemplo:
 
-`vercel.json` já faz o rewrite de SPA (acesso direto e refresh em qualquer rota). Configure **Build Command** `npm run build:demo` e **Output** `dist`.
-O Service Worker do MSW (`public/mockServiceWorker.js`) é servido da raiz. Nenhuma variável é obrigatória.
+```text
+http://localhost:5173/?scenario=slow,paymentDeclined
+http://localhost:5173/?reset=1
+```
+
+O primeiro endereço ativa latência e recusa do pagamento. O segundo restaura os dados de demonstração.
+
+Os cenários incluem catálogo vazio (`empty`), latência (`slow`, `jitter`), falhas de rede (`offline`), erros HTTP (`error500`, `error404`, `flaky`), sessão expirada (`sessionExpired`), mudança de preço (`priceChanged`), falta de estoque (`soldOut`), timeout do pedido (`orderTimeout`), recusa de pagamento (`paymentDeclined`) e falha ao favoritar (`favoriteFailure`).
+
+O objeto `window.__kurio` permite controlar os mocks no console. Entre as ações disponíveis estão atualizar um NFT, encerrar conexões, alternar o modo offline e expirar sessões.
+
+## Deploy
+
+O projeto pode ser publicado na Vercel usando `npm run build:demo` como comando de build e `dist` como diretório de saída. O arquivo `vercel.json` configura o fallback das rotas para `index.html`. O Service Worker do MSW é servido a partir de `public/mockServiceWorker.js`.
+
+O deploy é uma demonstração: autenticação, API, carteiras e pagamentos são simulados.
 
 ## Estrutura
 
-```
-src/contracts   schemas Zod = tipos e contratos REST/eventos (única fonte de verdade)
-src/api         Axios + validação das respostas (cliente HTTP, sem dados fictícios)
-src/app         roteador, política de cache, chaves de query por usuário
-src/realtime    socket.io-client: dedupe por id/versão, reconciliação após reconexão
-src/features    hooks de domínio (carrinho, favoritos, catálogo, checkout, auth)
-src/routes      telas (code-split por rota)
-src/mocks       MSW: handlers REST, servidor Socket.IO, fixtures, cenários, banco persistido
-e2e             Playwright · lighthouse  auditoria · scripts  verificação de contratos
-```
+- `src/contracts`: schemas Zod usados pelos tipos e contratos da API e dos eventos.
+- `src/api`: cliente HTTP e validação das respostas.
+- `src/app`: roteamento e configuração do cache.
+- `src/realtime`: cliente Socket.IO e atualização dos dados em tempo real.
+- `src/features`: funcionalidades de catálogo, carrinho, favoritos, checkout e autenticação.
+- `src/routes`: páginas da aplicação.
+- `src/mocks`: handlers MSW, dados de demonstração e cenários.
+- `e2e`: testes Playwright.
+- `lighthouse`: configuração e relatórios Lighthouse.
+
+As decisões de arquitetura e os contratos estão descritos em [ARCHITECTURE.md](./ARCHITECTURE.md).

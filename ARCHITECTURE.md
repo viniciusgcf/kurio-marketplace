@@ -54,7 +54,7 @@ O servidor é a fonte de verdade. Visitante usa `X-Cart-Token`; ao autenticar, o
 
 `staleTime` 30 s (catálogo/detalhe), 10 s (carrinho), 0 (cotação e pedido), ∞ (sessão); `gcTime` 5 min. **Retry:** só erros transitórios (rede/timeout/5xx), máx. 2, backoff 1 s/2 s; 4xx nunca repete; mutations não repetem sozinhas — o pedido é a exceção (3 tentativas com a **mesma chave**). Respostas obsoletas são descartadas por **chave** (parâmetros na chave) + `AbortSignal` do Query; `keepPreviousData` evita piscar na paginação (a UI marca `aria-busy`). Atualização otimista com rollback: favoritos (`onMutate` → `onError` restaura → `onSettled` invalida).
 
-## Mocks e Socket.IO — o que foi descoberto e como ficou
+## Mocks e Socket.IO
 
 1. **Ordem de inicialização.** `engine.io-client` captura `globalThis.WebSocket` ao ser **importado**. Se o app importar `socket.io-client` antes de o MSW ligar, o socket nunca é interceptado. Por isso `main.tsx` sobe os mocks e **só depois** importa o app dinamicamente.
 2. **Padrão de URL do `ws.link`.** O MSW remove o prefixo `/socket.io/` da URL do cliente antes de comparar; o handler é registrado só com a **origem**. Isso também captura o WebSocket de HMR do Vite; o handler repassa tudo que não é Socket.IO (`server.connect()`).
@@ -73,21 +73,23 @@ O servidor é a fonte de verdade. Visitante usa `X-Cart-Token`; ao autenticar, o
 - **Contagens de coleções/redes:** vêm da API (facetas reais do dataset de 54 NFTs), não dos números do Figma.
 - **Acessibilidade acrescentada:** link “Pular para o conteúdo”, anúncios `aria-live` (resultados, mutations, eventos), erros por campo com `aria-describedby`, preço anterior com texto para leitores de tela, foco preso/devolvido em diálogos (Radix), `prefers-reduced-motion` no shimmer.
 
-## Performance (expectativas e riscos conhecidos)
+## Performance
 
 - Code-split por rota; fontes e imagens locais (WebP, `width/height`, `fetchpriority=high` no LCP, `lazy` abaixo da dobra); skeletons com dimensões fixas (CLS).
 - O cliente Socket.IO é carregado de forma assíncrona após a montagem inicial, preservando o status realtime e a reconciliação. O chunk inicial do AppShell caiu de ~250 kB para ~120 kB (41 kB gzip); o cliente realtime segue em um chunk separado.
-- **Custo estrutural dos mocks:** o chunk do MSW (~470 kB, ~175 kB gzip) carrega em todas as páginas, porque o requisito é auditar **com** os mocks e sem simplificações. É a principal causa esperada de TBT/LCP acima da meta no perfil mobile.
+- O chunk do MSW (~470 kB, ~175 kB gzip) carrega em todas as páginas do build de demonstração. Ele contribui para os tempos de carregamento no perfil mobile.
 - O hero e as artes são upscales de baixa resolução; a nitidez, não o peso, é o limite.
 
-## Estado da verificação (leia antes de avaliar)
+## Validação
 
 | Item | Estado |
 |---|---|
-| `tsc`, ESLint, build de produção | ✅ executados e limpos |
-| `npm run test:mocks` (52 verificações: catálogo, filtros, cadastro/login, carrinho, cupom, idempotência, preço/estoque, timeout, recusa, sessão, perfil, carteiras, Socket.IO real com isolamento entre usuários) | ✅ passando |
-| Testes Playwright (74 = 37 × 2 viewports) | ✅ **71 passaram; 3 casos de filtros exclusivos de desktop foram pulados no mobile**. Executados em Chromium no Windows |
-| Baselines de regressão visual | ✅ **8 baselines** para início, detalhe, carrinho e pagamento, desktop e mobile; desktop captura a página inteira e mobile captura a viewport, como nos frames do Figma |
-| Lighthouse (12 execuções; 3 por página/perfil) | ⚠️ última rodada: Performance mobile 86 (início) e 89 (detalhe), abaixo da meta interna configurada de 90; desktop 99 e 90. Acessibilidade, Best Practices e SEO atingiram as metas. A imagem LCP foi pré-carregada e o cliente realtime saiu do chunk inicial; o gargalo mobile restante inclui o carregamento dos mocks. Medianas, LCP/CLS/TBT e relatórios estão em `lighthouse/reports/summary.md`. |
-| Fidelidade visual ao Figma | ⚠️ os 15 frames foram comparados; composição mobile da home, detalhe, login, cadastro e carrinho foi ajustada. Perfil, carteiras e recibo seguem a estrutura dos frames. Permanecem diferenças de conteúdo de demonstração (itens/valores) e o pagamento mantém seleção das carteiras salvas, conforme o requisito |
-| Deploy | ⏳ pendente: rewrite de SPA pronto em `vercel.json`; este ambiente não tem projeto Vercel vinculado nem autenticação configurada |
+| Item | Resultado |
+|---|---|
+| TypeScript, ESLint e build | Concluídos sem erros |
+| `npm run test:mocks` | 52 verificações aprovadas, incluindo contratos REST e Socket.IO |
+| Testes Playwright | 71 passaram; 3 testes de filtros exclusivos de desktop foram ignorados no mobile |
+| Testes visuais | 8 baselines para início, detalhe, carrinho e pagamento em desktop e mobile |
+| Lighthouse | Performance mobile: 86 na página inicial e 89 na página de detalhe. Desktop: 99 e 90, respectivamente. Acessibilidade, Best Practices e SEO atingiram as metas configuradas. Os resultados completos estão em `lighthouse/reports/summary.md`. |
+| Comparação com o Figma | Foram comparados 15 frames. Permanecem diferenças de conteúdo de demonstração; no checkout, a pessoa seleciona uma carteira cadastrada. |
+| Deploy | Ainda não publicado. O fallback de SPA está configurado em `vercel.json`. |

@@ -1,0 +1,3 @@
+{
+  "rewrites": [{ "source": "/((?!mockServiceWorker\\.js|images/|assets/|favicon\\.svg).*)", "destination": "/index.html" }]
+}

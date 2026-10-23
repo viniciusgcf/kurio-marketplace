@@ -1,0 +1,68 @@
+@import 'tailwindcss';
+@import '@fontsource/roboto-mono/latin-400.css';
+@import '@fontsource/roboto-mono/latin-500.css';
+@import '@fontsource/roboto-mono/latin-700.css';
+@import '@fontsource/roboto-mono/latin-ext-400.css';
+@import '@fontsource/roboto-mono/latin-ext-700.css';
+
+/* Tokens extraídos dos frames do Figma (amostragem de pixels). */
+@theme {
+  --color-bg: #140d0a;
+  --color-surface: #241612;
+  --color-surface-2: #38220f;
+  --color-line: #432c1a;
+  --color-field: #3f2319;
+  --color-accent: #d28a4c;
+  --color-accent-hi: #e89b55;
+  --color-ink: #f5f1eb;
+  --color-muted: #cfb28c;
+  --color-faint: #a18459;
+  --color-required: #f0805f;
+  --color-danger: #ff8a73;
+  --color-ok: #8fd19e;
+  --font-sans: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --breakpoint-xs: 26rem;
+}
+
+@layer base {
+  html { color-scheme: dark; }
+  body {
+    margin: 0;
+    background: var(--color-bg);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  a, button, input, select, textarea, [role='button'], [tabindex] { outline: none; }
+  :focus-visible {
+    outline: 2px solid var(--color-accent-hi);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  img { display: block; max-width: 100%; }
+  ::placeholder { color: var(--color-faint); opacity: 1; }
+}
+
+/* Skeleton com shimmer. Reservamos as dimensões no componente para evitar CLS. */
+@keyframes shimmer { to { background-position: -200% 0; } }
+.skeleton {
+  background: linear-gradient(100deg, #241612 30%, #3a251c 50%, #241612 70%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+  border-radius: 4px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; background: #2e1d16; }
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}
+
+.sr-only-focusable:not(:focus):not(:focus-within) {
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+/* Slider duplo de preço */
+.range-thumb::-webkit-slider-thumb { pointer-events: auto; appearance: none; width: 16px; height: 16px; border-radius: 9999px; background: var(--color-accent); border: 2px solid var(--color-bg); cursor: pointer; }
+.range-thumb::-moz-range-thumb { pointer-events: auto; width: 14px; height: 14px; border-radius: 9999px; background: var(--color-accent); border: 2px solid var(--color-bg); cursor: pointer; }
+.range-thumb:focus-visible::-webkit-slider-thumb { outline: 2px solid var(--color-accent-hi); outline-offset: 2px; }

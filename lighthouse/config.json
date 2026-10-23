@@ -1,0 +1,11 @@
+{
+  "baseUrl": "http://localhost:4173",
+  "runs": 3,
+  "scenario": "default",
+  "pages": [
+    { "name": "inicio", "path": "/" },
+    { "name": "detalhe", "path": "/nft/emerald-ape-042" }
+  ],
+  "profiles": ["mobile", "desktop"],
+  "targets": { "performance": 90, "accessibility": 95, "best-practices": 95, "seo": 90 }
+}

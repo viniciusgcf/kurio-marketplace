@@ -1,5 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { Heart, Search, ShoppingCart } from 'lucide-react'
+import { forwardRef, useEffect, useRef, useState } from 'react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAddToCart } from '@/features/cart/hooks'
 import { useFavorites, useToggleFavorite } from '@/features/favorites/hooks'
@@ -13,6 +14,33 @@ import { Price } from './price'
 /** Edição padrão para compra rápida: a aberta, se houver estoque; senão a primeira disponível. */
 export const defaultEdition = (nft: Nft): Edition | undefined =>
   nft.editions.find((e) => e.id === 'open' && e.available > 0) ?? nft.editions.find((e) => e.available > 0)
+
+export function DeferredNftCard(props: { nft: Nft; priority?: boolean; className?: string }) {
+  const [visible, setVisible] = useState(() => props.priority === true || window.matchMedia('(min-width: 768px)').matches)
+  const placeholder = useRef<HTMLLIElement>(null)
+
+  useEffect(() => {
+    if (visible) return
+    const element = placeholder.current
+    if (!element) return
+    if (typeof IntersectionObserver === 'undefined') {
+      const timer = window.setTimeout(() => setVisible(true), 0)
+      return () => window.clearTimeout(timer)
+    }
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry?.isIntersecting) {
+        setVisible(true)
+        observer.disconnect()
+      }
+    })
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [visible])
+
+  return visible
+    ? <NftCard {...props} />
+    : <NftCardSkeleton ref={placeholder} className={props.className} />
+}
 
 export function NftCard({ nft, priority = false, className }: { nft: Nft; priority?: boolean; className?: string }) {
   const { ids } = useFavorites()
@@ -54,11 +82,11 @@ export function NftCard({ nft, priority = false, className }: { nft: Nft; priori
 }
 
 /** Mesmas dimensões do card real: carregar não desloca o layout. */
-export function NftCardSkeleton() {
+export const NftCardSkeleton = forwardRef<HTMLLIElement, { className?: string }>(({ className }, ref) => {
   return (
-    <li aria-hidden="true" className="flex flex-col">
+    <li ref={ref} aria-hidden="true" className={cn('flex flex-col', className)}>
       <div className="bg-surface p-[3px]"><Skeleton className="aspect-square w-full rounded-[18px]" /></div>
       <div className="mt-3 min-h-[3.25rem] space-y-2"><Skeleton className="h-4 w-3/4" /><Skeleton className="h-4 w-1/3" /></div>
     </li>
   )
-}
+})

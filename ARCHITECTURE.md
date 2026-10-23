@@ -88,8 +88,8 @@ O servidor é a fonte de verdade. Visitante usa `X-Cart-Token`; ao autenticar, o
 |---|---|
 | TypeScript, ESLint e build | Concluídos sem erros |
 | `npm run test:mocks` | 52 verificações aprovadas, incluindo contratos REST e Socket.IO |
-| Testes Playwright | 71 passaram; 3 testes de filtros exclusivos de desktop foram ignorados no mobile |
+| Testes Playwright | 71 passaram; 3 testes exclusivos de desktop foram ignorados no mobile |
 | Testes visuais | 8 baselines para início, detalhe, carrinho e pagamento em desktop e mobile |
-| Lighthouse | Performance mobile: 86 na página inicial e 89 na página de detalhe. Desktop: 99 e 90, respectivamente. Acessibilidade, Best Practices e SEO atingiram as metas configuradas. Os resultados completos estão em `lighthouse/reports/summary.md`. |
+| Lighthouse | Performance mobile: 90 na página inicial e no detalhe; desktop: 99 e 90, respectivamente. São medianas de 3 medições; os resultados variam entre rodadas. As demais categorias atingiram as metas configuradas. Resultados em `lighthouse/reports/summary.md`. |
 | Comparação com o Figma | Foram comparados 15 frames. Permanecem diferenças de conteúdo de demonstração; no checkout, a pessoa seleciona uma carteira cadastrada. |
 | Deploy | Ainda não publicado. O fallback de SPA está configurado em `vercel.json`. |

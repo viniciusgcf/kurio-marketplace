@@ -1,8 +1,8 @@
 import { createRootRouteWithContext, createRoute, createRouter, lazyRouteComponent, redirect, type AnyRouter } from '@tanstack/react-router'
 import type { QueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
-import { catalogSearchSchema } from '@/features/catalog/search'
-import { sessionQuery } from './queries'
+import { catalogSearchSchema, toListParams } from '@/features/catalog/search'
+import { nftListQuery, nftQuery, sessionQuery } from './queries'
 import { AppShell, NotFound, RouteError } from '@/components/layout/app-shell'
 
 export interface RouterContext { queryClient: QueryClient }
@@ -25,10 +25,22 @@ const authSearch = z.object({ redirect: z.string().optional().catch(undefined), 
 /** Só aceita caminhos internos como destino de retorno (evita open redirect). */
 export const safeRedirect = (r?: string) => (r && r.startsWith('/') && !r.startsWith('//') ? r : '/')
 
-const index = createRoute({ getParentRoute: () => root, path: '/', validateSearch: catalogSearchSchema, component: lazyRouteComponent(() => import('@/routes/home')) })
+const index = createRoute({
+  getParentRoute: () => root,
+  path: '/',
+  validateSearch: catalogSearchSchema,
+  loaderDeps: ({ search }) => ({ search }),
+  loader: ({ context, deps }) => { void context.queryClient.prefetchQuery(nftListQuery(toListParams(deps.search))) },
+  component: lazyRouteComponent(() => import('@/routes/home')),
+})
 const login = createRoute({ getParentRoute: () => root, path: '/login', validateSearch: authSearch, component: lazyRouteComponent(() => import('@/routes/auth')) })
 const signup = createRoute({ getParentRoute: () => root, path: '/cadastro', validateSearch: authSearch, component: lazyRouteComponent(() => import('@/routes/auth').then((m) => ({ default: m.SignupRoute }))) })
-const nft = createRoute({ getParentRoute: () => root, path: '/nft/$id', component: lazyRouteComponent(() => import('@/routes/nft-detail')) })
+const nft = createRoute({
+  getParentRoute: () => root,
+  path: '/nft/$id',
+  loader: ({ context, params }) => { void context.queryClient.prefetchQuery(nftQuery(params.id)) },
+  component: lazyRouteComponent(() => import('@/routes/nft-detail')),
+})
 const cart = createRoute({ getParentRoute: () => root, path: '/carrinho', component: lazyRouteComponent(() => import('@/routes/cart')) })
 const checkout = createRoute({ getParentRoute: () => root, path: '/pagamento', beforeLoad: requireAuth, component: lazyRouteComponent(() => import('@/routes/checkout')) })
 const order = createRoute({ getParentRoute: () => root, path: '/pedido/$id', beforeLoad: requireAuth, component: lazyRouteComponent(() => import('@/routes/order')) })

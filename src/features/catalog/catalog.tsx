@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { ChevronLeft, ChevronRight, SlidersHorizontal, Search } from 'lucide-react'
 import { useId, useState, type FormEvent } from 'react'
 import { nftListQuery } from '@/app/queries'
-import { NftCard, NftCardSkeleton } from '@/components/nft/nft-card'
+import { DeferredNftCard, NftCardSkeleton } from '@/components/nft/nft-card'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { cn } from '@/lib/cn'
@@ -85,7 +85,7 @@ export function Catalog({ search, onChange, showMobileSearch = true }: { search:
             </div>
           ) : (
             <ul aria-busy={q.isFetching} className={cn('grid grid-cols-2 gap-x-3 gap-y-6 transition-opacity lg:grid-cols-3 lg:gap-x-[26px] lg:gap-y-8', q.isFetching && q.isPlaceholderData && 'opacity-60')}>
-              {data?.items.map((n, i) => <NftCard key={n.id} nft={n} priority={i < 3} className={i % 2 === 1 ? 'max-md:mt-8' : undefined} />)}
+              {data?.items.map((n, i) => <DeferredNftCard key={n.id} nft={n} priority={i < 2} className={i % 2 === 1 ? 'max-md:mt-8' : undefined} />)}
             </ul>
           )}
           {data && data.totalPages > 1 && <Pagination page={data.page} total={data.totalPages} onPage={(page) => { onChange({ page }); document.getElementById('catalogo')?.scrollIntoView() }} />}

@@ -45,6 +45,16 @@ test('compra completa: catálogo -> carrinho -> pagamento -> recibo confirmado',
   await expect(page).toHaveURL(/\/pedido\/ord_/)
   await expect(page.getByRole('heading', { name: 'Seus NFTs agora estão na sua carteira' })).toBeVisible({ timeout: 15_000 })
   await expect(page.getByRole('cell', { name: /Emerald Ape #042/ })).toBeVisible()
+  await page.getByRole('button', { name: 'Ver no Etherscan' }).click()
+  const explorerNotice = page.getByText(/Link de exploração simulado nesta demonstração/)
+  await expect(explorerNotice).toBeVisible()
+  const noticeBounds = await explorerNotice.evaluate((element) => {
+    const bounds = element.getBoundingClientRect()
+    return { left: bounds.left, right: bounds.right, scrollWidth: element.scrollWidth, clientWidth: element.clientWidth }
+  })
+  expect(noticeBounds.left).toBeGreaterThanOrEqual(0)
+  expect(noticeBounds.right).toBeLessThanOrEqual(await page.evaluate(() => window.innerWidth))
+  expect(noticeBounds.scrollWidth).toBeLessThanOrEqual(noticeBounds.clientWidth)
   await page.reload() // o recibo é recuperável
   await expect(page.getByRole('heading', { name: 'Seus NFTs agora estão na sua carteira' })).toBeVisible()
   await page.goto('/carrinho')

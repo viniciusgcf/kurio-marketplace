@@ -20,7 +20,7 @@ function ToastItem({ id, tone, message }: { id: number; tone: 'info' | 'success'
   return (
     <div className={cn('pointer-events-auto flex max-w-md items-start gap-3 rounded border bg-surface px-4 py-3 text-sm shadow-xl', tone === 'error' ? 'border-danger' : tone === 'success' ? 'border-ok' : 'border-accent')}>
       <span aria-hidden="true" className={cn('mt-0.5 font-bold', tone === 'error' ? 'text-danger' : tone === 'success' ? 'text-ok' : 'text-accent')}>{tone === 'error' ? '✕' : tone === 'success' ? '✓' : 'ℹ'}</span>
-      <p className="flex-1">{message}</p>
+      <p className="min-w-0 flex-1 break-words [overflow-wrap:anywhere]">{message}</p>
       <button type="button" onClick={() => dismissToast(id)} aria-label="Dispensar notificação" className="text-faint hover:text-ink"><X size={16} aria-hidden="true" /></button>
     </div>
   )

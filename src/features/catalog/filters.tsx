@@ -18,7 +18,7 @@ export function FiltersPanel({ search, facets, featured, onChange, showFeatured 
       </div>
       {showFeatured && featured && (
         <section aria-labelledby="destaque-titulo" className="bg-surface-2/60">
-          <h2 id="destaque-titulo" className="px-5 pt-5 text-xl font-bold text-accent-hi">NFT EM DESTAQUE</h2>
+          <h2 id="destaque-titulo" className="px-5 pt-5 text-center text-xl font-bold text-accent-hi">NFT EM DESTAQUE</h2>
           <p className="px-5 pb-3 pt-1 text-center text-lg font-bold">OFERTA LIMITADA</p>
           <Link to="/nft/$id" params={{ id: featured.id }} aria-label={`Oferta limitada: ${featured.name}`}>
             <img src={featured.image} alt={`Arte do NFT ${featured.name}`} width={310} height={310} loading="lazy" decoding="async" className="aspect-square w-full rounded-[18px] object-cover" />
